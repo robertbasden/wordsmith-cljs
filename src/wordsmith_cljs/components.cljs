@@ -10,11 +10,13 @@
 (defn page-text [text]
   [:div {:class "page-text"} text])
 
-(defn button [text]
-  [:button {:class "button button--success"} text])
+(defn button [label click-handler]
+  [:button {:class "button button--success" :on-click click-handler } label])
 
 (defn button-set [buttons]
-  [:div {:class "button-set"} buttons])
+  [:div {:class "button-set"}
+   (for [button-def buttons]
+     ^{:key button-def} [button (:label button-def) (:on-click button-def)])])
 
 (defn instructions-container [text]
   [:div {:class "instructions-container"} text])
@@ -43,7 +45,8 @@
 
 ;;letter-container--selectable
 (defn letter-container [letters]
-  [:div {:class "letter-container"} letters])
+  [:div {:class "letter-container"}
+   (for [letter letters] ^{:key letter} letter)])
 
 ;; cards
 

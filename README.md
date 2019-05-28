@@ -1,5 +1,5 @@
 
 ```
 lein figwheel
-lein cljsbuild once prod
+lein figwheel dev
 ```
