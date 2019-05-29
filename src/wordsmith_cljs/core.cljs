@@ -13,7 +13,8 @@
 (def allowed-time (* 10 1000))
 
 (defn create-new-game-state [current-time]
-  { :end-time (+ current-time allowed-time) })
+  {:end-time (+ current-time allowed-time)
+   :show-hint false })
 
 (defn change-page [current-state page]
   (assoc current-state
@@ -33,6 +34,12 @@
               :current-page :game-over)
        (assoc current-state
               :current-time time)))
+
+(defn show-hint [current-state]
+  (if (not (nil? (:game-state current-state)))
+    (assoc-in current-state
+           [:game-state :show-hint] true)
+    current-state))
 
 (def state (r/atom {:current-page :title-screen
                   :game-state nil
@@ -54,7 +61,17 @@
         fraction-gone (- 1 (/ time-remaining allowed-time))]
     [:div 
      (components/timer fraction-gone)
-     (components/letter-container [[components/letter "A"]])]))
+     (components/letter-container [[components/letter "A"]])
+     [:div {:class "instructions-container"} "Click or type the letters above to solve the anagram before the time runs out!"]
+     [:br]
+     (components/button-set [{:label "Undo" :on-click #()}
+                             {:label "Clear" :on-click #()}
+                             {:label "Submit" :on-click #()}
+                             {:label "Show Hint" :on-click #(swap! state show-hint)}])
+     [:br]
+     (if (get-in @state [:game-state :show-hint])
+       [:div {:class "hint-container" } "Hint: Move one's body into a bent or doubled-up position."]
+       [:div])]))
 
 (defn game-over []
   [:div
