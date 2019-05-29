@@ -22,6 +22,18 @@
                                        (create-new-game-state (:current-time current-state))
                                        nil)))
 
+(defn tick [current-state time]
+     (if (and
+          (not (nil? (:game-state current-state)))
+          (> (:current-time current-state)
+             (get-in current-state [:game-state :end-time])))
+       (assoc current-state
+              :current-time time
+              :game-state nil
+              :current-page :game-over)
+       (assoc current-state
+              :current-time time)))
+
 (def state (r/atom {:current-page :title-screen
                   :game-state nil
                   :current-time 0
@@ -61,7 +73,7 @@
   "Use request animation frame to keep the time stored in the game state up to date on every tick"
   [time]
   (.requestAnimationFrame js/window update-time)
-  (swap! state assoc :current-time time))
+  (swap! state tick time))
 
 ;; Start the request animation frame function to keep time up to date
 (update-time 0)
