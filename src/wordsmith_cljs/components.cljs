@@ -10,13 +10,23 @@
 (defn page-text [text]
   [:div {:class "page-text"} text])
 
-(defn button [label click-handler]
-  [:button {:class "button button--success" :on-click click-handler } label])
+(defn get-button-class [button-type]
+  (case button-type
+    :success "button button--success"
+    :danger "button button--danger"
+    "button"))
+
+(defn button [label click-handler button-type disabled]
+  [:button {:class (get-button-class button-type) :on-click click-handler :disabled disabled } label])
 
 (defn button-set [buttons]
   [:div {:class "button-set"}
    (for [button-def buttons]
-     ^{:key button-def} [button (:label button-def) (:on-click button-def)])])
+     ^{:key button-def} [button
+                         (:label button-def)
+                         (:on-click button-def)
+                         (:button-type button-def)
+                         (:disabled button-def)])])
 
 (defn instructions-container [text]
   [:div {:class "instructions-container"} text])
@@ -32,21 +42,19 @@
        [:circle {:cx "100px" :cy "100px" :r "90px"}]
        [:path {:d "M100 100 L100 30" :transform (str "rotate (" rotation " 100 100)")}]]]]))
 
-(defn letter-element [letter classes]
-  [:div {:class classes}
-   [:div letter]])
-
-(defn letter
-  ([letter] (letter-element letter "letter no-select"))
-  ([letter disabled?]
-   (if (= disabled? true)
-     (letter-element letter "letter no-select letter--disabled")
-     (letter-element letter "letter no-select"))))
-
-;;letter-container--selectable
-(defn letter-container [letters]
+(defn letter-select [letters click-handler]
+  "This component is just used for displaying letters"
   [:div {:class "letter-container"}
-   (for [letter letters] ^{:key letter} letter)])
+   (map-indexed (fn [idx l]
+                  (let [classes (if (nil? (:selection l)) "letter no-select" "letter letter--disabled no-select")]
+                    [:div {:class classes :key idx :on-click (fn [] (if (nil? (:selection l)) (click-handler l)))}
+                     [:div (:letter l)]
+                     ])) letters)])
+
+(defn letter-display [letters]
+  "This component is just used for displaying letters"
+  [:div {:class "letter-container"}
+   (map-indexed (fn [idx letter] [:div {:class "letter no-select" :key idx} [:div letter]]) letters)])
 
 ;; cards
 
