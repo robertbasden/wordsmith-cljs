@@ -3,6 +3,7 @@
    [clojure.string :as str]
    [sablono.core :as sab :include-macros true]
    [reagent.core :as r]
+   [wordsmith-cljs.game :as game]
    [wordsmith-cljs.components :as components])
   (:require-macros
    [devcards.core :as dc :refer [defcard deftest]]))
@@ -13,25 +14,12 @@
 
 (def allowed-time (* 10 1000))
 
-(defn map-word [word]
-  (->> (str/split word "")
-       (map-indexed (fn [idx letter] {:id (+ idx 1) :letter letter :selection nil}))
-       (shuffle)))
-
-(defn create-new-game-state [current-time]
-  {:end-time (+ current-time allowed-time)
-   :available-letters (map-word "MAXIMIZED")
-   :original-word "MAXIMIZED"
-   :hint "HINT GOES HERE"
-   :next-selection 1
-   :show-hint false })
-
 (defn change-page [current-state page message]
   (assoc current-state
          :current-page page
          :message message
          :game-state (if (= page :game-in-progress)
-                       (create-new-game-state (:current-time current-state))
+                       (game/create-new-game "MAXIMIZED" "Hint goes here" (:current-time current-state) allowed-time)
                        nil)))
 
 (defn tick [current-state time]
@@ -70,33 +58,19 @@
         (select-letter current-state matching-letter)))
     current-state))
 
-(defn show-hint [current-state]
-  (if (not (nil? (:game-state current-state)))
-    (assoc-in current-state
-           [:game-state :show-hint] true)
+(defn show-hint [{:keys [game-state] :as current-state}]
+  (if (not (nil? game-state))
+    (assoc current-state :game-state (game/show-hint game-state))
     current-state))
 
-(defn clear-current-guess [current-state]
-  (if (not (nil? (:game-state current-state)))
-    (-> current-state
-        (assoc-in 
-         [:game-state :available-letters] (map (fn [l] (assoc l :selection nil)) (get-in current-state [:game-state :available-letters])))
-        (assoc-in
-         [:game-state :next-selection] 1))
+(defn clear-current-guess [{:keys [game-state] :as current-state}]
+  (if (not (nil? game-state))
+    (assoc current-state :game-state (game/reset-current-guess game-state))
     current-state))
 
-(defn undo-last-letter [current-state]
-  (if (not (nil? (:game-state current-state)))
-    (let [next-selection (- (get-in current-state [:game-state :next-selection]) 1)]
-      (-> current-state
-          (assoc-in 
-           [:game-state :available-letters] (map (fn [l]
-                                                   (if (= (:selection l) next-selection) 
-                                                     (assoc l :selection nil)
-                                                     l)
-                                                   ) (get-in current-state [:game-state :available-letters])))
-          (assoc-in
-           [:game-state :next-selection] next-selection)))
+(defn undo-last-letter [{:keys [game-state] :as current-state}]
+  (if (not (nil? game-state))
+    (assoc current-state :game-state (game/undo game-state))
     current-state))
 
 (defonce state (r/atom {:current-page :title-screen
@@ -104,16 +78,9 @@
                   :current-time 0
                   }))
 
-(defn guess-correct? [available-letters original-word]
-  (let [guessed-word (->> available-letters
-                          (sort-by :selection)
-                          (map (fn [l] (:letter l)))
-                          (clojure.string/join))]
-    (= guessed-word original-word)))
-
 (defn next-stage [current-state]
-  (if (guess-correct? (get-in current-state [:game-state :available-letters]) (get-in current-state [:game-state :original-word]))
-    (assoc current-state :game-state (create-new-game-state (:current-time current-state)))
+  (if (game/solution-correct? (get current-state :game-state))
+    (assoc current-state :game-state (game/create-new-game "MAXIMIZED" "Hint goes here" (:current-time current-state) allowed-time))
     (change-page current-state :game-over "Whoops! That was the wrong word!")))
 
 ;; page components
@@ -139,7 +106,7 @@
         can-submit (= (count (filter (fn [l] (nil? (:selection l))) available-letters)) 0)
         can-show-hint (not (get-in @state [:game-state :show-hint]))
         letter-selection-started (> (count current-guess) 0)]
-    [:div 
+    [:div
      (components/timer fraction-gone)
      (components/letter-select available-letters #(swap! state select-letter %1))
      [:br]
@@ -153,7 +120,7 @@
                              {:label "Show Hint" :on-click #(swap! state show-hint) :disabled (not can-show-hint)}])
      [:br]
      (if (get-in @state [:game-state :show-hint])
-       [:div {:class "hint-container" } (str "Hint: " (get-in @state [:game-state :hint]))]
+       [:div {:class "hint-container"} (str "Hint: " (get-in @state [:game-state :hint]))]
        [:div])]))
 
 (defn game-over [message]
