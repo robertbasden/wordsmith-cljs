@@ -35,27 +35,14 @@
        (assoc current-state
               :current-time time)))
 
-(defn select-letter [current-state letter]
-  (let [next-selection (get-in current-state [:game-state :next-selection])
-        available-letters (get-in current-state [:game-state :available-letters])]
-    (if (nil? (:selection letter))
-      (-> current-state
-          (assoc-in [:game-state :next-selection] (+ next-selection 1))
-          (assoc-in [:game-state :available-letters] (map (fn [l]
-                                                            (if (= (:id l) (:id letter))
-                                                              (assoc l :selection next-selection)
-                                                              l)) available-letters)))
-      current-state)))
+(defn select-letter [{:keys [game-state] :as current-state} letter]
+  (if (not (nil? game-state))
+    (assoc current-state :game-state (game/select-by-letter game-state letter))
+    current-state))
 
-(defn select-by-character [current-state character]
-  (if (not (nil? (:game-state current-state)))
-    (let [matching-letter (first (filter (fn [l]
-                                           (and 
-                                            (nil? (:selection l))
-                                            (= character (:letter l)))) (get-in current-state [:game-state :available-letters])))]
-      (if (nil? matching-letter)
-        current-state
-        (select-letter current-state matching-letter)))
+(defn select-by-character [{:keys [game-state] :as current-state} character]
+  (if (not (nil? game-state))
+    (assoc current-state :game-state (game/select-by-character game-state character))
     current-state))
 
 (defn show-hint [{:keys [game-state] :as current-state}]

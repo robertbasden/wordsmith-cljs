@@ -36,12 +36,32 @@
     (is (= (+ 3 4) 7) "Testing the adding")
     (is (= (+ 1 2) 3) "Testing the adding")))
 
-;; Add next letter
+;; Select by letter
 
-(defn add-next-letter []
+(defn select-by-letter [{:keys [next-selection available-letters] :as current-state} letter]
+  (if (nil? (:selection letter))
+    (assoc current-state
+           :next-selection (+ next-selection 1)
+           :available-letters (map (fn [l]
+                                     (if (= (:id l) (:id letter))
+                                       (assoc l :selection next-selection)
+                                       l)) available-letters))))
+
+(defcard select-by-letter
   {})
 
-(defcard add-next-letter
+;; Select by character
+
+(defn select-by-character [{:keys [available-letters] :as current-state} character]
+  (let [matching-letter (first (filter (fn [l]
+                                         (and
+                                          (nil? (:selection l))
+                                          (= character (:letter l)))) available-letters))]
+    (if (nil? matching-letter)
+      current-state
+      (select-by-letter current-state matching-letter))))
+
+(defcard select-by-character
   {})
 
 ;; Reset current guess
