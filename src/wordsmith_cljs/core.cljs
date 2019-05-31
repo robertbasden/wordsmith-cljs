@@ -22,6 +22,7 @@
   {:end-time (+ current-time allowed-time)
    :available-letters (map-word "MAXIMIZED")
    :original-word "MAXIMIZED"
+   :hint "HINT GOES HERE"
    :next-selection 1
    :show-hint false })
 
@@ -152,7 +153,7 @@
                              {:label "Show Hint" :on-click #(swap! state show-hint) :disabled (not can-show-hint)}])
      [:br]
      (if (get-in @state [:game-state :show-hint])
-       [:div {:class "hint-container" } "Hint: Move one's body into a bent or doubled-up position."]
+       [:div {:class "hint-container" } (str "Hint: " (get-in @state [:game-state :hint]))]
        [:div])]))
 
 (defn game-over [message]
