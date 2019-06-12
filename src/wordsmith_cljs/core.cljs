@@ -4,7 +4,8 @@
    [sablono.core :as sab :include-macros true]
    [reagent.core :as r]
    [wordsmith-cljs.game :as game]
-   [wordsmith-cljs.components :as components])
+   [wordsmith-cljs.components :as components]
+   [wordsmith-cljs.words :as words])
   (:require-macros
    [devcards.core :as dc :refer [defcard deftest]]))
 
@@ -15,12 +16,13 @@
 (def allowed-time (* 10 1000))
 
 (defn change-page [current-state page message]
-  (assoc current-state
-         :current-page page
-         :message message
-         :game-state (if (= page :game-in-progress)
-                       (game/create-new-game "MAXIMIZED" "Hint goes here" (:current-time current-state) allowed-time)
-                       nil)))
+  (let [[new-word new-hint] (words/get-random-word)]
+    (assoc current-state
+           :current-page page
+           :message message
+           :game-state (if (= page :game-in-progress)
+                         (game/create-new-game new-word new-hint (:current-time current-state) allowed-time)
+                         nil))))
 
 (defn tick [current-state time]
      (if (and
@@ -66,9 +68,10 @@
                   }))
 
 (defn next-stage [current-state]
-  (if (game/solution-correct? (get current-state :game-state))
-    (assoc current-state :game-state (game/create-new-game "MAXIMIZED" "Hint goes here" (:current-time current-state) allowed-time))
-    (change-page current-state :game-over "Whoops! That was the wrong word!")))
+  (let [[new-word new-hint] (words/get-random-word)]
+    (if (game/solution-correct? (get current-state :game-state))
+      (assoc current-state :game-state (game/create-new-game new-word new-hint (:current-time current-state) allowed-time))
+      (change-page current-state :game-over "Whoops! That was the wrong word!"))))
 
 ;; page components
 
