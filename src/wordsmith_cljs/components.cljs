@@ -42,11 +42,11 @@
 (defn button-set [buttons]
   [:div {:class "button-set"}
    (for [button-def buttons]
-     ^{:key button-def} [button
+     ^{:key button-def} (button
                          (:label button-def)
                          (:on-click button-def)
                          (:button-type button-def)
-                         (:disabled button-def)])])
+                         (:disabled button-def)))])
 
 (defn timer [value]
   (let [rotation (* 360 value)]
@@ -56,6 +56,11 @@
        [:circle {:cx "100px" :cy "100px" :r "90px"}]
        [:path {:d "M100 100 L100 30" :transform (str "rotate (" rotation " 100 100)")}]]]]))
 
+(defn letter-display [letters]
+  "This component is used for displaying letters, in this case tge letters can not be selected"
+  [:div {:class "letter-container"}
+   (map-indexed (fn [idx letter] [:div {:class "letter no-select" :key idx} [:div letter]]) letters)])
+
 (defn letter-select [letters click-handler]
   "This component is used for displaying letters, which can the be selected / disabled / etc..."
   [:div {:class "letter-container"}
@@ -64,11 +69,6 @@
                     [:div {:class classes :key idx :on-click (fn [] (if (nil? (:selection l)) (click-handler l)))}
                      [:div (:letter l)]
                      ])) letters)])
-
-(defn letter-display [letters]
-  "This component is used for displaying letters, in this case tge letters can not be selected"
-  [:div {:class "letter-container"}
-   (map-indexed (fn [idx letter] [:div {:class "letter no-select" :key idx} [:div letter]]) letters)])
 
 ;; cards
 
@@ -102,8 +102,10 @@
 (defcard
   "Lorem ipsum dolor sit amet"
   (fn [data-atom _] (sab/html [:div
-                               (button-set [{:label "Normal button" :on-click #(reset! data-atom {:last-click "Normal button clicked"}) :button-type nil :disabled false}
-                                            {:label "Normal button" :on-click #(reset! data-atom {:last-click "Normal button clicked"}) :button-type nil :disabled false}])]))
+                               (button-set [{:label "Button 1" :on-click #(reset! data-atom {:last-click "Button 1 clicked"}) :button-type :success :disabled false}
+                                            {:label "Button 2" :on-click #(reset! data-atom {:last-click "Button 2 clicked"}) :disabled false}
+                                            {:label "Button 3" :on-click #(reset! data-atom {:last-click "Button 3 clicked"}) :disabled true}])
+                               [:br]]))
   {:last-click nil}
   {:inspect-data true})
 
