@@ -110,28 +110,55 @@
   {:inspect-data true})
 
 (defn- timer-debug-input [data-atom]
-  [:input {:value (:value @data-atom)
-           :type "range" :min 0 :max 1 :step 0.01
-           :on-change (fn [e] (reset! data-atom {:value (cljs.reader/read-string (-> e .-target .-value))}))}])
+  [:div
+   [:input {:value (:value @data-atom)
+            :type "range" :min 0 :max 1 :step 0.01 :name "timer-debug-input"
+            :on-change (fn [e] (reset! data-atom {:value (cljs.reader/read-string (-> e .-target .-value))}))}]
+   [:label { :for "timer-debug-input" } "Elapsed time"]])
 
 (defcard
-  "Lorem ipsum dolor sit amet"
-  (fn [data-atom _] (sab/html [:div 
+  "
+# Timer
+The time component just takes a single float between `0.0` and `1.0` to dictate how far through the allowed time the player is.
+"
+  (fn [data-atom _] (sab/html [:div
                                (timer-debug-input data-atom)
                                (timer (:value @data-atom))]))
-  { :value 0 }
-  { :inspect-data true })
-
-(def test-available-letters
-  [{:id 1 :letter "W" :selection 1}
-   {:id 2 :letter "O" :selection 2}
-   {:id 3 :letter "R" :selection 3}
-   {:id 4 :letter "D" :selection 4}])
+  {:value 0}
+  {:inspect-data true})
 
 (defcard
-  (sab/html
-   (letter-select test-available-letters #())))
-
-(defcard
+  "
+# Letter Display
+Letter display component just takes the word to display (as a single `string`):
+```
+(letter-display \"WORD\")
+```
+results in:
+"
   (sab/html
    (letter-display "WORD")))
+
+(def selected-letters
+  [{:id 1 :letter "W" :selection nil}
+   {:id 2 :letter "O" :selection nil}
+   {:id 3 :letter "R" :selection nil}
+   {:id 4 :letter "D" :selection nil}])
+
+(defn update-selected [letter data-atom]
+  (swap! data-atom assoc :last-letter-clicked letter))
+
+(defcard
+  "
+# Letter Selection
+For displaying the letters the player has selected, we need to use the more advanced component, as letters
+will need to have click events bound and also be disabled when they are selected. The click handler provided
+will be called with the full map of the letter that is clicked.
+"
+  (fn [data-atom _] (sab/html 
+                     [:div
+                      (letter-select selected-letters (fn [letter]
+                                                        (update-selected letter data-atom)))
+                      [:br]]))
+  {:selected-letters selected-letters :last-letter-clicked nil }
+  {:inspect-data true})
