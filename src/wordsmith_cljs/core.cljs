@@ -5,6 +5,9 @@
    [reagent.core :as r]
    [wordsmith-cljs.game :as game]
    [wordsmith-cljs.components :as components]
+   [wordsmith-cljs.components.buttons :as buttons]
+   [wordsmith-cljs.components.timer :as timer]
+   [wordsmith-cljs.components.letters :as letters]
    [wordsmith-cljs.words :as words])
   (:require-macros
    [devcards.core :as dc :refer [defcard deftest]]))
@@ -79,7 +82,7 @@
   [:div 
    (components/page-title "WORDSMITH")
    (components/page-text "Complete the anagram before the time runs out")
-   (components/button-set [{:label "Start" :on-click #(swap! state change-page :game-in-progress) :button-type :success}])])
+   (buttons/button-set [{:label "Start" :on-click #(swap! state change-page :game-in-progress) :button-type :success}])])
 
 (defn game-in-progress []
   (let [current-time (:current-time @state)
@@ -97,14 +100,14 @@
         can-show-hint (not (get-in @state [:game-state :show-hint]))
         letter-selection-started (> (count current-guess) 0)]
     [:div
-     (components/timer fraction-gone)
-     (components/letter-select available-letters #(swap! state select-letter %1))
+     (timer/timer fraction-gone)
+     (letters/select available-letters #(swap! state select-letter %1))
      [:br]
      (if (= letter-selection-started true)
-       (components/letter-display current-guess)
+       (letters/display current-guess)
        [:div {:class "instructions-container"} "Click or type the letters above to solve the anagram before the time runs out!"])
      [:br]
-     (components/button-set [{:label "Undo" :on-click #(swap! state undo-last-letter) :disabled (not can-undo)}
+     (buttons/button-set [{:label "Undo" :on-click #(swap! state undo-last-letter) :disabled (not can-undo)}
                              {:label "Clear" :on-click #(swap! state clear-current-guess) :button-type :danger :disabled (not can-clear)}
                              {:label "Submit" :on-click #(swap! state next-stage) :button-type :success :disabled (not can-submit)}
                              {:label "Show Hint" :on-click #(swap! state show-hint) :disabled (not can-show-hint)}])
@@ -117,7 +120,7 @@
   [:div
    (components/page-title "Whoops!")
    (components/page-text message)
-   (components/button-set [{:label "Start Again?" :on-click #(swap! state change-page :game-in-progress) :button-type :success}])])
+   (buttons/button-set [{:label "Start Again?" :on-click #(swap! state change-page :game-in-progress) :button-type :success}])])
 
 (defn main-component []
   [:div {:class "container"}
